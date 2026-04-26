@@ -41,40 +41,28 @@ app.post('/api/chat', async (req, res) => {
     const { message, history } = req.body;
     
     if (!process.env.GEMINI_API_KEY) {
-      // Intelligent Mock AI Coach
-      const lowerMsg = message.toLowerCase();
-      
+      const response = generateLocalResponse(message);
+      return res.json({ response });
+    }
+
+    // Helper for local responses
+    function generateLocalResponse(msg) {
+      const lowerMsg = msg.toLowerCase();
       const defaults = [
-         "I hear you! What's the next big goal on your mind?",
-         "That's interesting. Let's make sure that aligns with your daily schedule.",
-         "Got it! I'm here if you need motivation or want to log a habit.",
-         "Keep going! Remember that every 1% improvement counts.",
-         "I'm all ears. Tell me more about your progress today!"
+         "I'm locked in! What's our next objective?",
+         "Consistency is key. How's your habit streak looking today?",
+         "I'm tracking your progress. Let's make today count!",
+         "Focus on the process, and the results will follow. What's next?",
+         "Beast mode is a mindset. Are you ready to level up?"
       ];
       
-      let response = defaults[Math.floor(Math.random() * defaults.length)];
+      if (lowerMsg.match(/\b(hi|hello|hey|yo)\b/)) return "Hello! Coach Aurora here. Ready to dominate the day?";
+      if (lowerMsg.includes('sayan')) return "Hey Sayan! Your GrowthOS stats are looking strong. What's the plan?";
+      if (lowerMsg.includes('gym') || lowerMsg.includes('workout')) return "Sweat is just weakness leaving the body! Keep that physical discipline high. 💪";
+      if (lowerMsg.includes('code') || lowerMsg.includes('dsa')) return "Algorithm mastery is a marathon, not a sprint. Keep solving! 💻";
+      if (lowerMsg.includes('waste') || lowerMsg.includes('reels')) return "Awareness is the first step. Reset your focus and get back to deep work. You've got this.";
       
-      if (lowerMsg.match(/\b(hi|hello|hey|yo)\b/)) {
-         response = "Hello there! Ready to crush some goals and build your GrowthOS streak today?";
-      } else if (lowerMsg.includes('sayan')) {
-         response = "Hey Sayan! Working with you is great. Let's keep Beast Mode activated. What's next?";
-      } else if (lowerMsg.includes('gym') || lowerMsg.includes('workout') || lowerMsg.includes('exercise')) {
-         response = "Great job breaking a sweat! Physical health directly boosts cognitive performance. Remember to stretch! 💪";
-      } else if (lowerMsg.includes('dsa') || lowerMsg.includes('code') || lowerMsg.includes('algorithm')) {
-         response = "Awesome! Coding daily is how you become a 10x engineering beast. Keep crushing those logic puzzles! 💻";
-      } else if (lowerMsg.includes('sleep') || lowerMsg.includes('tired')) {
-         response = "Resting is just as important as working. Try to aim for 7-8 hours of quality sleep to recharge your mental batteries. 😴";
-      } else if (lowerMsg.includes('waste') || lowerMsg.includes('reels') || lowerMsg.includes('scroll')) {
-         response = "We all slip up sometimes! The important thing is you're aware of it. Try setting a 15-minute timer next time to pull yourself out.\n\nReady to get back to work?";
-      } else if (lowerMsg.includes('stress') || lowerMsg.includes('overwhelm') || lowerMsg.includes('hard')) {
-         response = "Take a deep breath. Big goals take time. Break your task down into a tiny, 5-minute micro-action. You've got this! 🌟";
-      } else if (lowerMsg.includes('day')) {
-         response = "Your day is looking solid. You have an 85 daily growth score and you've hit most of your habits. Keep that momentum!";
-      }
-
-      // Add a slight delay to mimic processing natively
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return res.json({ response });
+      return defaults[Math.floor(Math.random() * defaults.length)];
     }
 
     const tools = [{
@@ -153,10 +141,35 @@ app.post('/api/chat', async (req, res) => {
     console.error('AI Error:', error.message || error);
     console.error('GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
     console.error('GEMINI_API_KEY length:', (process.env.GEMINI_API_KEY || '').length);
-    // Graceful fallback instead of 500
-    res.json({ response: "I'm thinking extra hard right now... Could you try asking me again in a moment? 🤔" });
+    
+    // Fallback to local intelligence
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const response = generateLocalResponse(message);
+    res.json({ response });
   }
 });
+
+// Helper for local responses (re-defined outside for scope)
+function generateLocalResponse(msg) {
+  const lowerMsg = msg.toLowerCase();
+  const defaults = [
+     "I'm locked in! What's our next objective?",
+     "Consistency is key. How's your habit streak looking today?",
+     "I'm tracking your progress. Let's make today count!",
+     "Focus on the process, and the results will follow. What's next?",
+     "Beast mode is a mindset. Are you ready to level up?"
+  ];
+  
+  if (lowerMsg.match(/\b(hi|hello|hey|yo)\b/)) return "Hello! Coach Aurora here. Ready to dominate the day?";
+  if (lowerMsg.includes('sayan')) return "Hey Sayan! Your GrowthOS stats are looking strong. What's the plan?";
+  if (lowerMsg.includes('gym') || lowerMsg.includes('workout')) return "Sweat is just weakness leaving the body! Keep that physical discipline high. 💪";
+  if (lowerMsg.includes('code') || lowerMsg.includes('dsa')) return "Algorithm mastery is a marathon, not a sprint. Keep solving! 💻";
+  if (lowerMsg.includes('waste') || lowerMsg.includes('reels')) return "Awareness is the first step. Reset your focus and get back to deep work. You've got this.";
+  if (lowerMsg.includes('thank')) return "You're welcome! Now let's keep that momentum going.";
+  
+  return defaults[Math.floor(Math.random() * defaults.length)];
+}
+
 
 // Growth Score Update Logic (Mock)
 app.post('/api/score', (req, res) => {
