@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const twilio = require('twilio');
 const cron = require('node-cron');
 const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 // Load .env from default path, then override with Render's secret file location
 dotenv.config();
 dotenv.config({ path: '/etc/secrets/.env', override: true });
@@ -12,8 +13,9 @@ dotenv.config({ path: '/etc/secrets/.env', override: true });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize Gemini
+// Initialize AI Clients
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const groq = new Groq({ apiKey: process.env.GEMINI_API_KEY || '' }); // Uses same var if it starts with gsk_
 
 app.use(helmet());
 app.use(cors());
@@ -39,32 +41,30 @@ app.get('/api/health', (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, history } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY || '';
     
-    if (!process.env.GEMINI_API_KEY) {
+    if (!apiKey) {
       const response = generateLocalResponse(message);
       return res.json({ response });
     }
 
-    // Helper for local responses
-    function generateLocalResponse(msg) {
-      const lowerMsg = msg.toLowerCase();
-      const defaults = [
-         "I'm locked in! What's our next objective?",
-         "Consistency is key. How's your habit streak looking today?",
-         "I'm tracking your progress. Let's make today count!",
-         "Focus on the process, and the results will follow. What's next?",
-         "Beast mode is a mindset. Are you ready to level up?"
-      ];
-      
-      if (lowerMsg.match(/\b(hi|hello|hey|yo)\b/)) return "Hello! Coach Aurora here. Ready to dominate the day?";
-      if (lowerMsg.includes('sayan')) return "Hey Sayan! Your GrowthOS stats are looking strong. What's the plan?";
-      if (lowerMsg.includes('gym') || lowerMsg.includes('workout')) return "Sweat is just weakness leaving the body! Keep that physical discipline high. 💪";
-      if (lowerMsg.includes('code') || lowerMsg.includes('dsa')) return "Algorithm mastery is a marathon, not a sprint. Keep solving! 💻";
-      if (lowerMsg.includes('waste') || lowerMsg.includes('reels')) return "Awareness is the first step. Reset your focus and get back to deep work. You've got this.";
-      
-      return defaults[Math.floor(Math.random() * defaults.length)];
+    // IF GROQ KEY DETECTED
+    if (apiKey.startsWith('gsk_')) {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          { role: "system", content: "You are Coach Aurora, a friendly AI self-development coach for GrowthOS. You help users track habits, stay motivated, and build discipline. Keep responses concise and encouraging." },
+          ...(history || []).map(h => ({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+          })),
+          { role: "user", content: message }
+        ],
+        model: "llama-3.3-70b-versatile",
+      });
+      return res.json({ response: completion.choices[0].message.content });
     }
 
+    // GEMINI LOGIC (Keep as fallback)
     const tools = [{
       functionDeclarations: [{
         name: "scheduleReminder",
