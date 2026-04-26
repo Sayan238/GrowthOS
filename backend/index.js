@@ -5,7 +5,9 @@ const dotenv = require('dotenv');
 const twilio = require('twilio');
 const cron = require('node-cron');
 const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
+// Load .env from default path, then override with Render's secret file location
 dotenv.config();
+dotenv.config({ path: '/etc/secrets/.env', override: true });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,6 +22,17 @@ app.use(express.json());
 // Routes
 app.get('/', (req, res) => {
   res.send('GrowthOS Backend Running');
+});
+
+// Health check endpoint for debugging
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    geminiKeyPresent: !!process.env.GEMINI_API_KEY,
+    geminiKeyLength: (process.env.GEMINI_API_KEY || '').length,
+    twilioConfigured: !!process.env.TWILIO_ACCOUNT_SID,
+    nodeEnv: process.env.NODE_ENV || 'development'
+  });
 });
 
 // AI Chat Endpoint
@@ -138,6 +151,8 @@ app.post('/api/chat', async (req, res) => {
     res.json({ response: text });
   } catch (error) {
     console.error('AI Error:', error.message || error);
+    console.error('GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
+    console.error('GEMINI_API_KEY length:', (process.env.GEMINI_API_KEY || '').length);
     // Graceful fallback instead of 500
     res.json({ response: "I'm thinking extra hard right now... Could you try asking me again in a moment? 🤔" });
   }
