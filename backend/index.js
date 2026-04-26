@@ -93,7 +93,7 @@ app.post('/api/chat', async (req, res) => {
     }];
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       tools: tools,
       systemInstruction: "You are Coach Aurora, a friendly AI self-development coach for GrowthOS. You help users track habits, stay motivated, and build discipline. Keep responses concise and encouraging. When a user asks for a reminder, use the scheduleReminder tool."
     });
