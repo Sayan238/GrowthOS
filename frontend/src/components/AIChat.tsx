@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Mic, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
+
 
 interface Message {
   role: 'user' | 'assistant';
@@ -56,7 +58,7 @@ export default function AIChat() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/chat', {
+      const response = await axios.post(`${API_BASE_URL}/api/chat`, {
         message: userMessage,
         history: messages.map(m => ({
            role: m.role === 'assistant' ? 'model' : 'user',

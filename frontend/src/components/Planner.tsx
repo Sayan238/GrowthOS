@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
+
 import { 
   DndContext, 
   closestCenter,
@@ -83,7 +85,7 @@ export default function Planner() {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/sync-schedule', { tasks });
+      const res = await axios.post(`${API_BASE_URL}/api/sync-schedule`, { tasks });
       alert(`✅ Synced! ${res.data.synced} upcoming reminders scheduled on WhatsApp.`);
     } catch {
       alert('Failed to sync. Is the backend running?');
@@ -118,7 +120,7 @@ export default function Planner() {
 
     // Auto-schedule WhatsApp reminder for this task
     try {
-      await axios.post('http://localhost:5000/api/schedule-reminder', {
+      await axios.post(`${API_BASE_URL}/api/schedule-reminder`, {
         id: savedTask.id,
         title: savedTask.title,
         time: savedTask.time
